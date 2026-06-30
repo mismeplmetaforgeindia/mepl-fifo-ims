@@ -44,8 +44,28 @@ begin
 end;
 $$;
 
+-- NOTE: is_admin() is defined in section 3.1, immediately after the
+-- public.users table — a `language sql` body is validated at creation time,
+-- so the table it queries must already exist.
+
+-- ---------------------------------------------------------------------
+-- 3. Tables
+-- ---------------------------------------------------------------------
+
+-- 3.1 users  (mirrors auth.users; id == auth user id)
+create table public.users (
+  id          uuid primary key references auth.users(id) on delete cascade,
+  email       text unique not null,
+  full_name   text,
+  role        text not null default 'viewer' check (role in ('admin','viewer')),
+  is_active   boolean not null default true,
+  created_at  timestamptz not null default now()
+);
+
 -- Role check used throughout RLS. SECURITY DEFINER so it can read
 -- public.users without tripping that table's own RLS (avoids recursion).
+-- Defined here (not in section 2) because a `language sql` body is validated
+-- at creation time and must see public.users already existing.
 create or replace function public.is_admin()
 returns boolean
 language sql
@@ -61,20 +81,6 @@ as $$
       and u.is_active = true
   );
 $$;
-
--- ---------------------------------------------------------------------
--- 3. Tables
--- ---------------------------------------------------------------------
-
--- 3.1 users  (mirrors auth.users; id == auth user id)
-create table public.users (
-  id          uuid primary key references auth.users(id) on delete cascade,
-  email       text unique not null,
-  full_name   text,
-  role        text not null default 'viewer' check (role in ('admin','viewer')),
-  is_active   boolean not null default true,
-  created_at  timestamptz not null default now()
-);
 
 -- 3.2 rm_master  (app-managed canonical material list)
 create table public.rm_master (
