@@ -134,7 +134,7 @@ create table public.coil_locations (
   bay           text,
   row_no        text,
   level_no      text,
-  location_code text unique,                     -- e.g. R2-B4-L1
+  location_code text,                             -- e.g. R12-C3; a rack holds many coils, so NOT unique
   assigned_at   timestamptz not null default now(),
   assigned_by   uuid references public.users(id) -- app-managed -> hard FK ok
 );
